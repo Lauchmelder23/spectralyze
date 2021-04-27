@@ -49,8 +49,9 @@ std::vector<std::complex<double>> radix2dit(const std::vector<double>::const_ite
 	return output;
 }
 
-std::vector<std::pair<double, double>> FFT(std::vector<double> signal, size_t sampleRate)
+std::vector<std::pair<double, double>> FFT(const std::vector<double>::const_iterator& begin, const std::vector<double>::const_iterator& end, size_t sampleRate)
 {
+	std::vector<double> signal(begin, end);
 	size_t N = signal.size();
 	while (!POW_OF_TWO(N))
 	{

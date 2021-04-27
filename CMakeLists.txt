@@ -6,9 +6,10 @@ project(spectralyze)
 
 add_executable(spectralyze
 	"src/main.cpp"
- "src/FFT.hpp")
+ "src/FFT.hpp" "lib/cxxopts/cxxopts.hpp")
 
 target_include_directories(spectralyze PRIVATE
 	"lib/AudioFile"
 	"lib/json"
+	"lib/cxxopts"
 )

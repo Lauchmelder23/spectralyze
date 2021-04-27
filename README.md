@@ -24,3 +24,8 @@ Each audio channel in the file is transformed separately. The resulting JSON has
 }
 ```
 Every supplied audio file will result in one JSON file. The magnitude is the absolute value of the real and imaginary part of the Fourier transformation.
+
+## Used libraries
+* [AudioFile](https://github.com/adamstark/AudioFile) for loading audio files
+* [JSON for Modern C++](https://github.com/nlohmann/json) for writing JSON data
+* [cxxopts](https://github.com/jarro2783/cxxopts) for parsing commandline arguments
