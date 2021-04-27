@@ -6,6 +6,10 @@ A commandline tool for fourier transforming audio files
 spectralyze file1 [file2...]
 ```
 
+## Supported Formats
+* WAV
+* AIFF
+
 ## What does it do
 Spectralyze reads one or more audio files from the standard arguments and creates JSON files containing the spectrum of the file. 
 Each audio channel in the file is transformed separately. The resulting JSON has the following structure
