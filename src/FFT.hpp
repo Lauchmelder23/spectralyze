@@ -53,7 +53,8 @@ std::vector<std::pair<double, double>>
 FFT(const std::vector<double>::const_iterator& begin, 
 	const std::vector<double>::const_iterator& end, 
 	size_t sampleRate,
-	double minFreq, double maxFreq)
+	double minFreq, double maxFreq,
+	unsigned int zeropadding)
 {
 	std::vector<double> signal(begin, end);
 	size_t N = signal.size();
@@ -62,6 +63,11 @@ FFT(const std::vector<double>::const_iterator& begin,
 		// Pad with zeros
 		signal.push_back(0.0f);
 		N++;
+	}
+
+	if (zeropadding > 1) {
+		N = (signal.size() << (zeropadding - 1));
+		signal.insert(signal.end(), N - signal.size(), 0);
 	}
 
 	std::vector<std::complex<double>> spectrum = radix2dit(signal.cbegin(), N, 1);

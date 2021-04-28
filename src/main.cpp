@@ -16,6 +16,7 @@ struct Settings {
 	float splitInterval;
 	double minFreq, maxFreq;
 	unsigned int analyzeChannel;
+	unsigned int zeropadding;
 };
 
 Settings Parse(int argc, char** argv);
@@ -59,7 +60,9 @@ int main(int argc, char** argv)
 						audioFile.samples[c-1].cbegin(), 
 						audioFile.samples[c-1].cend(), 
 						sampleRate,
-						setts.minFreq, setts.maxFreq);
+						setts.minFreq, setts.maxFreq,
+						setts.zeropadding
+					);
 
 				output[chName] = nlohmann::json::array();
 				for (const std::pair<double, double>& pair : spectrum) {
@@ -80,7 +83,8 @@ int main(int argc, char** argv)
 								audioFile.samples[c-1].cend()
 							), 
 							sampleRate,
-							setts.minFreq, setts.maxFreq
+							setts.minFreq, setts.maxFreq,
+							setts.zeropadding
 						);
 
 					output[chName].push_back({
@@ -122,6 +126,7 @@ Settings Parse(int argc, char** argv)
 			("q,quiet", "Suppress text output", cxxopts::value<bool>()->default_value("false"))
 			("i,interval", "Splits audio file into intervals of length i milliseconds and transforms them individually (0 to not split file)", cxxopts::value<float>())
 			("f,frequency", "Defines the frequency range of the output spectrum (Default: all the frequencies)", cxxopts::value<std::vector<double>>())
+			("p,pad", "Add extra zero-padding. By default, the program will pad the signals with 0s until the number of samples is a power of 2 (this would be equivalent to -p 1). With this option you can tell the program to instead pad until the power of 2 after the next one (-p 2) etc. This increases frequency resolution", cxxopts::value<unsigned int>())
 			("m,mono", "Analyze only the given channel", cxxopts::value<unsigned int>()->default_value("0"))
 			("files", "Files to fourier transform", cxxopts::value<std::vector<std::filesystem::path>>())
 			("h,help", "Print usage")
@@ -157,6 +162,7 @@ Settings Parse(int argc, char** argv)
 		setts.quiet = (result.count("quiet") ? result["quiet"].as<bool>() : false);
 		setts.splitInterval = (result.count("interval") ? result["interval"].as<float>() : 0.0f);
 		setts.analyzeChannel = (result.count("mono") ? result["mono"].as<unsigned int>() : 0);
+		setts.zeropadding = (result.count("pad") ? result["pad"].as<unsigned int>() : 1);
 		
 
 		if (setts.maxFreq <= setts.minFreq && (setts.maxFreq != 0))
