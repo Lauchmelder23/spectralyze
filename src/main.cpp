@@ -15,6 +15,7 @@ struct Settings {
 	bool quiet;
 	float splitInterval;
 	double minFreq, maxFreq;
+	unsigned int analyzeChannel;
 };
 
 Settings Parse(int argc, char** argv);
@@ -39,6 +40,12 @@ int main(int argc, char** argv)
 		int numChannels = audioFile.getNumChannels();
 
 		nlohmann::json output;
+		int c = setts.analyzeChannel;
+		if (c == 0)
+			c = 1;
+		else
+			numChannels = c;
+
 		for (int c = 1; c <= numChannels; c++) {
 			PRINTER(setts, "\rAnalyzing " << filename << "... Channel " << c << "/" << numChannels << " 0%                  ");
 
@@ -115,6 +122,7 @@ Settings Parse(int argc, char** argv)
 			("q,quiet", "Suppress text output", cxxopts::value<bool>()->default_value("false"))
 			("i,interval", "Splits audio file into intervals of length i milliseconds and transforms them individually (0 to not split file)", cxxopts::value<float>())
 			("f,frequency", "Defines the frequency range of the output spectrum (Default: all the frequencies)", cxxopts::value<std::vector<double>>())
+			("m,mono", "Analyze only the given channel", cxxopts::value<unsigned int>()->default_value("0"))
 			("files", "Files to fourier transform", cxxopts::value<std::vector<std::filesystem::path>>())
 			("h,help", "Print usage")
 			;
@@ -148,6 +156,7 @@ Settings Parse(int argc, char** argv)
 		setts.files = result["files"].as<std::vector<std::filesystem::path>>();
 		setts.quiet = (result.count("quiet") ? result["quiet"].as<bool>() : false);
 		setts.splitInterval = (result.count("interval") ? result["interval"].as<float>() : 0.0f);
+		setts.analyzeChannel = (result.count("mono") ? result["mono"].as<unsigned int>() : 0);
 		
 
 		if (setts.maxFreq <= setts.minFreq && (setts.maxFreq != 0))
