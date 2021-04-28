@@ -49,7 +49,12 @@ std::vector<std::complex<double>> radix2dit(const std::vector<double>::const_ite
 	return output;
 }
 
-std::vector<std::pair<double, double>> FFT(const std::vector<double>::const_iterator& begin, const std::vector<double>::const_iterator& end, size_t sampleRate)
+std::vector<std::pair<double, double>> 
+FFT(const std::vector<double>::const_iterator& begin, 
+	const std::vector<double>::const_iterator& end, 
+	size_t sampleRate,
+	double minFreq, double maxFreq,
+	unsigned int zeropadding)
 {
 	std::vector<double> signal(begin, end);
 	size_t N = signal.size();
@@ -60,13 +65,21 @@ std::vector<std::pair<double, double>> FFT(const std::vector<double>::const_iter
 		N++;
 	}
 
+	if (zeropadding > 1) {
+		N = (signal.size() << (zeropadding - 1));
+		signal.insert(signal.end(), N - signal.size(), 0);
+	}
+
 	std::vector<std::complex<double>> spectrum = radix2dit(signal.cbegin(), N, 1);
 	double freqRes = (double)sampleRate / (double)N;
 	double nyquistLimit = (double)sampleRate / 2.0f;
 
 	std::vector<std::pair<double, double>> output;
-	double freq = 0.0f;
-	for (int k = 0; freq < nyquistLimit; k++) 
+	double freq = minFreq;
+	if (maxFreq == 0)
+		maxFreq = nyquistLimit;
+
+	for (int k = freq / freqRes; freq < nyquistLimit && freq < maxFreq; k++) 
 	{
 		output.push_back(std::make_pair(freq, 2.0f * std::abs(spectrum[k]) / (double)N));
 		freq += freqRes;
