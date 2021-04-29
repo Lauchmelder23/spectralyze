@@ -58,7 +58,8 @@ FFT(const std::vector<double>::const_iterator& begin,
 	const std::vector<double>::const_iterator& end,
 	size_t sampleRate,
 	double minFreq, double maxFreq,
-	unsigned int zeropadding)
+	unsigned int zeropadding,
+	bool mertz)
 {
 	std::vector<double> signal(begin, end);
 	size_t N = signal.size();
@@ -89,7 +90,11 @@ FFT(const std::vector<double>::const_iterator& begin,
 
 	for (int k = freq / freqRes; freq < nyquistLimit && freq < maxFreq; k++)
 	{
-		output.push_back(std::make_pair(freq, 2.0f * std::abs(spectrum[k]) / (double)N));
+		if(!mertz)
+			output.push_back(std::make_pair(freq, 2.0f * std::abs(spectrum[k]) / (double)N));
+		else
+			output.push_back(std::make_pair(freq, 2.0f * (spectrum[k] * std::exp(-1i * std::arg(spectrum[k]))).real() / (double)N));
+
 		freq += freqRes;
 	}
 
