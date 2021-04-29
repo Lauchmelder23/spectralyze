@@ -69,6 +69,12 @@ Each audio channel in the file is transformed separately. The resulting JSON has
 ```
 Every supplied audio file will result in one JSON file. The magnitude is the absolute value of the real and imaginary part of the Fourier transformation.
 
+## Example use case
+This tool can theoretically be used to visualize music. The visualization part has to be written by you, though. For my little experiment I used python with matplotlib to create a line diagram from the spectra:
+
+https://user-images.githubusercontent.com/24511538/116532180-4218e300-a8e0-11eb-8914-6b3b50228e58.mp4
+
+
 ## Used libraries
 * [AudioFile](https://github.com/adamstark/AudioFile) for loading audio files
 * [JSON for Modern C++](https://github.com/nlohmann/json) for writing JSON data
