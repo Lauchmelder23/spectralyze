@@ -77,6 +77,7 @@ This tool can theoretically be used to visualize music. The visualization part h
 
 https://user-images.githubusercontent.com/24511538/116532180-4218e300-a8e0-11eb-8914-6b3b50228e58.mp4
 
+Visualization written by [mpsparrow](https://github.com/mpsparrow)
 
 ## Used libraries
 * [AudioFile](https://github.com/adamstark/AudioFile) for loading audio files
