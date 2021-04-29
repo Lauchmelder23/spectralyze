@@ -12,28 +12,30 @@ using namespace std::complex_literals;
 
 typedef std::function<double(unsigned int)> WindowFunction;
 
+static WindowFunction window;
+
 inline double WindowRectangle(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowVonHann(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowGauss(unsigned int k, unsigned int offset, unsigned int width);
+inline double WindowTriangle(unsigned int k, unsigned int offset, unsigned int width);
 
 std::vector<std::complex<double>> 
 radix2dit(
 	const std::vector<double>& list,
 	size_t offset,
 	size_t N, 
-	size_t s,
-	WindowFunction winFunc)
+	size_t s)
 {
 	std::vector<std::complex<double>> output(N);
 	if (N == 1)
 	{
-		output[0] = winFunc(offset) * (list[offset]);
+		output[0] = window(offset) * (list[offset]);
 	}
 	else
 	{
 		size_t halfN = N >> 1;
-		std::vector<std::complex<double>> first = radix2dit(list, offset, halfN, s << 1, winFunc);
-		std::vector<std::complex<double>> second = radix2dit(list, offset + s, halfN, s << 1, winFunc);
+		std::vector<std::complex<double>> first = radix2dit(list, offset, halfN, s << 1);
+		std::vector<std::complex<double>> second = radix2dit(list, offset + s, halfN, s << 1);
 
 		std::complex<double> coeff = -M_PI * 1.0i / (double)halfN;
 
@@ -55,8 +57,7 @@ FFT(const std::vector<double>::const_iterator& begin,
 	const std::vector<double>::const_iterator& end,
 	size_t sampleRate,
 	double minFreq, double maxFreq,
-	unsigned int zeropadding,
-	WindowFunctions func, unsigned int width, unsigned int offset)
+	unsigned int zeropadding)
 {
 	std::vector<double> signal(begin, end);
 	size_t N = signal.size();
@@ -73,15 +74,10 @@ FFT(const std::vector<double>::const_iterator& begin,
 	}
 
 	WindowFunction f;
-	switch (func)
-	{
-	case WindowFunctions::RECTANGLE:	f = std::bind(WindowRectangle, std::placeholders::_1, offset, width); break;
-	case WindowFunctions::VON_HANN:		f = std::bind(WindowVonHann, std::placeholders::_1, offset, width); break;
-	case WindowFunctions::GAUSS:		f = std::bind(WindowGauss, std::placeholders::_1, offset, width); break;
-	} 
+	
 
 
-	std::vector<std::complex<double>> spectrum = radix2dit(signal, 0, N, 1, f);
+	std::vector<std::complex<double>> spectrum = radix2dit(signal, 0, N, 1);
 	double freqRes = (double)sampleRate / (double)N;
 	double nyquistLimit = (double)sampleRate / 2.0f;
 
@@ -99,6 +95,17 @@ FFT(const std::vector<double>::const_iterator& begin,
 	return output;
 }
 
+void SetWindowFunction(WindowFunctions func, unsigned int width)
+{
+	switch (func)
+	{
+	case WindowFunctions::RECTANGLE:	window = std::bind(WindowRectangle, std::placeholders::_1, 0, width); break;
+	case WindowFunctions::VON_HANN:		window = std::bind(WindowVonHann, std::placeholders::_1, 0, width); break;
+	case WindowFunctions::GAUSS:		window = std::bind(WindowGauss, std::placeholders::_1, 0, width); break;
+	case WindowFunctions::TRIANGLE:		window = std::bind(WindowTriangle, std::placeholders::_1, 0, width); break;
+	}
+}
+
 inline double WindowRectangle(unsigned int k, unsigned int offset, unsigned int width)
 {
 	return ((offset < k) && (k < width));
@@ -113,4 +120,9 @@ inline double WindowGauss(unsigned int k, unsigned int offset, unsigned int widt
 {
 	double coeff = (k - (width - 1) * 0.5f) / (0.4f * (width - 1) * 0.5f);
 	return ((offset < k) && (k < width)) ? (std::exp(-0.5f * coeff * coeff)) : 0;
+}
+
+inline double WindowTriangle(unsigned int k, unsigned int offset, unsigned int width)
+{
+	return 1.0f - std::abs(((double)k - ((double)width / 2.0f)) / ((double)width / 2.0f));
 }

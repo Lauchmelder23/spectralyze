@@ -14,7 +14,8 @@
 const std::map<std::string, WindowFunctions> FUNCTIONS {
 	{"rectangle", WindowFunctions::RECTANGLE},
 	{"von-hann", WindowFunctions::VON_HANN},
-	{"gauss", WindowFunctions::GAUSS}
+	{"gauss", WindowFunctions::GAUSS},
+	{"triangle", WindowFunctions::TRIANGLE}
 };
 
 struct Settings {
@@ -63,14 +64,14 @@ int main(int argc, char** argv)
 
 			if (setts.splitInterval == 0.0f)
 			{
+				SetWindowFunction(setts.window, audioFile.samples[c-1].size());
 				std::vector<std::pair<double, double>> spectrum = 
 					FFT(
 						audioFile.samples[c-1].cbegin(), 
 						audioFile.samples[c-1].cend(), 
 						sampleRate,
 						setts.minFreq, setts.maxFreq,
-						setts.zeropadding,
-						setts.window, audioFile.samples[c-1].size(), 0
+						setts.zeropadding
 					);
 
 				output[chName] = nlohmann::json::array();
@@ -81,6 +82,7 @@ int main(int argc, char** argv)
 			else
 			{
 				int sampleInterval = sampleRate * setts.splitInterval / 1000;
+				SetWindowFunction(setts.window, sampleInterval);
 				int currentSample;
 				for (currentSample = 0; currentSample < audioFile.samples[c - 1].size(); currentSample += sampleInterval)
 				{
@@ -93,8 +95,7 @@ int main(int argc, char** argv)
 							),
 							sampleRate,
 							setts.minFreq, setts.maxFreq,
-							setts.zeropadding,
-							setts.window, sampleInterval, 0
+							setts.zeropadding
 						);
 
 					output[chName].push_back({
@@ -137,7 +138,7 @@ Settings Parse(int argc, char** argv)
 			("i,interval", "Splits audio file into intervals of length i milliseconds and transforms them individually (0 to not split file)", cxxopts::value<float>())
 			("f,frequency", "Defines the frequency range of the output spectrum (Default: all the frequencies)", cxxopts::value<std::vector<double>>())
 			("p,pad", "Add extra zero-padding. By default, the program will pad the signals with 0s until the number of samples is a power of 2 (this would be equivalent to -p 1). With this option you can tell the program to instead pad until the power of 2 after the next one (-p 2) etc. This increases frequency resolution", cxxopts::value<unsigned int>())
-			("w,window", "Specify the window function used (rectangle (default), von-hann, gauss)", cxxopts::value<std::string>()->default_value("rectangle"))
+			("w,window", "Specify the window function used (rectangle (default), von-hann, gauss, triangle)", cxxopts::value<std::string>()->default_value("rectangle"))
 			("m,mono", "Analyze only the given channel", cxxopts::value<unsigned int>()->default_value("0"))
 			("files", "Files to fourier transform", cxxopts::value<std::vector<std::filesystem::path>>())
 			("h,help", "Print usage")

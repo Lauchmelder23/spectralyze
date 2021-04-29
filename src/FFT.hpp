@@ -5,13 +5,14 @@
 enum class WindowFunctions {
 	RECTANGLE,
 	GAUSS,
-	VON_HANN
+	VON_HANN,
+	TRIANGLE
 };
 
 extern std::vector<std::pair<double, double>> FFT(const std::vector<double>::const_iterator& begin,
 	const std::vector<double>::const_iterator& end,
 	size_t sampleRate,
 	double minFreq, double maxFreq,
-	unsigned int zeropadding,
-	WindowFunctions func, unsigned int width, unsigned int offset);
+	unsigned int zeropadding);
 
+extern void SetWindowFunction(WindowFunctions func, unsigned int width);
