@@ -6,7 +6,8 @@ enum class WindowFunctions {
 	RECTANGLE,
 	GAUSS,
 	VON_HANN,
-	TRIANGLE
+	TRIANGLE,
+	BLACKMAN
 };
 
 extern std::vector<std::pair<double, double>> FFT(const std::vector<double>::const_iterator& begin,

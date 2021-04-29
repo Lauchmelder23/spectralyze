@@ -18,6 +18,7 @@ inline double WindowRectangle(unsigned int k, unsigned int offset, unsigned int 
 inline double WindowVonHann(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowGauss(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowTriangle(unsigned int k, unsigned int offset, unsigned int width);
+inline double WindowBlackman(unsigned int k, unsigned int offset, unsigned int width);
 
 std::vector<std::complex<double>> 
 radix2dit(
@@ -103,6 +104,7 @@ void SetWindowFunction(WindowFunctions func, unsigned int width)
 	case WindowFunctions::VON_HANN:		window = std::bind(WindowVonHann, std::placeholders::_1, 0, width); break;
 	case WindowFunctions::GAUSS:		window = std::bind(WindowGauss, std::placeholders::_1, 0, width); break;
 	case WindowFunctions::TRIANGLE:		window = std::bind(WindowTriangle, std::placeholders::_1, 0, width); break;
+	case WindowFunctions::BLACKMAN:		window = std::bind(WindowBlackman, std::placeholders::_1, 0, width); break;
 	}
 }
 
@@ -125,4 +127,9 @@ inline double WindowGauss(unsigned int k, unsigned int offset, unsigned int widt
 inline double WindowTriangle(unsigned int k, unsigned int offset, unsigned int width)
 {
 	return 1.0f - std::abs(((double)k - ((double)width / 2.0f)) / ((double)width / 2.0f));
+}
+
+inline double WindowBlackman(unsigned int k, unsigned int offset, unsigned int width)
+{
+	return 0.5f * (1.0f - 0.16f) - 0.5f * cos(2.0f * M_PI * k / (width - 1)) + 0.5f * 0.16f * cos(4.0f * M_PI * k / (width - 1));
 }
