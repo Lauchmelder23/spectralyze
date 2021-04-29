@@ -33,6 +33,9 @@ This will tell the program to pad to the 3rd-next power of 2! This means, if the
 
 **RESOLUTION (and thus file size) SCALES WITH 2^p**
 
+## Window functions
+Window functions are used to "cut out" parts of the signal. When you use the `-i` flag, you are only looking at a certain interval in the audio file. This is equivalent to multiplying the whole audio file with a rectangular window function (it is 0 everywhere except in the interval, where it is 1). With the `-w` flag you can choose between different window functions. Currently supported are the Von-Hann function, and the Gauss function. Both of these yield "smoother" spectra and get rid of a lot of noise.
+
 ## Example command
 ```
 spectralyze -i 20 -f 0,1000 -p 3 coolSong.wav

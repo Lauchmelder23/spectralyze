@@ -6,7 +6,7 @@ project(spectralyze)
 
 add_executable(spectralyze
 	"src/main.cpp"
- "src/FFT.hpp"
+ "src/FFT.hpp" "src/FFT.cpp"
  )
 
 target_include_directories(spectralyze PRIVATE
