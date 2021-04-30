@@ -75,6 +75,10 @@ Every supplied audio file will result in one JSON file. The magnitude is the abs
 ## Example use case
 This tool can theoretically be used to visualize music. The visualization part has to be written by you, though. For my little experiment I used python with matplotlib to create a line diagram from the spectra:
 
+
+https://user-images.githubusercontent.com/24511538/116720172-2d217a00-a9dc-11eb-945f-5db40300da78.mp4
+
+
 https://user-images.githubusercontent.com/24511538/116688886-a22e8880-a9b7-11eb-9a3d-b9b5069de697.mp4
 
 Visualization written by [mpsparrow](https://github.com/mpsparrow)
