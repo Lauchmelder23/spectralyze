@@ -26,6 +26,7 @@ struct Settings {
 	double minFreq, maxFreq;
 	unsigned int analyzeChannel;
 	unsigned int zeropadding;
+	bool approx;
 	WindowFunctions window;
 };
 
@@ -35,6 +36,9 @@ int main(int argc, char** argv)
 {
 	Settings setts;
 	setts = Parse(argc, argv);
+
+	if (setts.approx) 
+		UseFastFunctions();
 
 	int numFiles = setts.files.size();
 	for (auto& file : setts.files) {
@@ -141,6 +145,7 @@ Settings Parse(int argc, char** argv)
 			("p,pad", "Add extra zero-padding. By default, the program will pad the signals with 0s until the number of samples is a power of 2 (this would be equivalent to -p 1). With this option you can tell the program to instead pad until the power of 2 after the next one (-p 2) etc. This increases frequency resolution", cxxopts::value<unsigned int>())
 			("w,window", "Specify the window function used (rectangle (default), von-hann, gauss, triangle, blackman (3-term))", cxxopts::value<std::string>()->default_value("rectangle"))
 			("m,mono", "Analyze only the given channel", cxxopts::value<unsigned int>()->default_value("0"))
+			("approx", "Use faster, but more inaccurate trigonometric functions instead of the std-functions (EXPERIMENTAL)")
 			("files", "Files to fourier transform", cxxopts::value<std::vector<std::filesystem::path>>())
 			("h,help", "Print usage")
 			;
@@ -176,6 +181,7 @@ Settings Parse(int argc, char** argv)
 		setts.splitInterval = (result.count("interval") ? result["interval"].as<float>() : 0.0f);
 		setts.analyzeChannel = (result.count("mono") ? result["mono"].as<unsigned int>() : 0);
 		setts.zeropadding = (result.count("pad") ? result["pad"].as<unsigned int>() : 1);
+		setts.approx = (result.count("approx") ? true : false);
 
 		if (!result.count("window"))
 		{

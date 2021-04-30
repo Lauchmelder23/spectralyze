@@ -8,17 +8,34 @@
 
 #define POW_OF_TWO(x) (x && !(x & (x - 1)))
 
+constexpr double REC_2_FAC = (double)1.0f / (double)2.0f;
+constexpr double REC_3_FAC = (double)1.0f / (double)6.0f;
+constexpr double REC_4_FAC = (double)1.0f / (double)24.0f;
+constexpr double REC_5_FAC = (double)1.0f / (double)120.0f;
+constexpr double REC_6_FAC = (double)1.0f / (double)720.0f;
+constexpr double REC_7_FAC = (double)1.0f / (double)5040.0f;
+constexpr double REC_8_FAC = (double)1.0f / (double)40320.0f;
+constexpr double REC_9_FAC = (double)1.0f / (double)362880.0f;
+
 using namespace std::complex_literals;
 
 typedef std::function<double(unsigned int)> WindowFunction;
+typedef std::function<double(double)> TrigFunction;
+typedef std::function<std::complex<double>(double)> ExpFunction;
 
-static WindowFunction window;
+WindowFunction window;
+TrigFunction Sin = std::bind((double(*)(double))& std::sin, std::placeholders::_1);
+TrigFunction Cos = std::bind((double(*)(double))& std::cos, std::placeholders::_1);
 
 inline double WindowRectangle(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowVonHann(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowGauss(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowTriangle(unsigned int k, unsigned int offset, unsigned int width);
 inline double WindowBlackman(unsigned int k, unsigned int offset, unsigned int width);
+
+double FastCos(double x);
+double FastSin(double x);
+std::complex<double> ComplexExp(double x);
 
 std::vector<std::complex<double>> 
 radix2dit(
@@ -38,12 +55,12 @@ radix2dit(
 		std::vector<std::complex<double>> first = radix2dit(list, offset, halfN, s << 1);
 		std::vector<std::complex<double>> second = radix2dit(list, offset + s, halfN, s << 1);
 
-		std::complex<double> coeff = -M_PI * 1.0i / (double)halfN;
+		double coeff = -M_PI / (double)halfN;
 
 		for (int k = 0; k < halfN; k++)
 		{
 			std::complex<double> p = first[k];
-			std::complex<double> q = std::exp(coeff * (double)k) * second[k];
+			std::complex<double> q = ComplexExp(coeff * (double)k) * second[k];
 
 			output[k] = p + q;
 			output[halfN + k] = p - q;
@@ -76,7 +93,7 @@ FFT(const std::vector<double>::const_iterator& begin,
 
 	WindowFunction f;
 	
-
+	
 
 	std::vector<std::complex<double>> spectrum = radix2dit(signal, 0, N, 1);
 	double freqRes = (double)sampleRate / (double)N;
@@ -109,6 +126,12 @@ void SetWindowFunction(WindowFunctions func, unsigned int width)
 	}
 }
 
+void UseFastFunctions()
+{
+	Sin = std::bind(FastSin, std::placeholders::_1);
+	Cos = std::bind(FastCos, std::placeholders::_1);
+}
+
 inline double WindowRectangle(unsigned int k, unsigned int offset, unsigned int width)
 {
 	return ((offset < k) && (k < width));
@@ -116,7 +139,7 @@ inline double WindowRectangle(unsigned int k, unsigned int offset, unsigned int 
 
 inline double WindowVonHann(unsigned int k, unsigned int offset, unsigned int width)
 {
-	return ((offset < k) && (k < width)) ? (0.5f * (1.0f - cos(2.0f * M_PI * k / (width - 1)))) : 0;
+	return ((offset < k) && (k < width)) ? (0.5f * (1.0f - Cos(2.0f * M_PI * k / (width - 1)))) : 0;
 }
 
 inline double WindowGauss(unsigned int k, unsigned int offset, unsigned int width)
@@ -132,5 +155,30 @@ inline double WindowTriangle(unsigned int k, unsigned int offset, unsigned int w
 
 inline double WindowBlackman(unsigned int k, unsigned int offset, unsigned int width)
 {
-	return 0.5f * (1.0f - 0.16f) - 0.5f * cos(2.0f * M_PI * k / (width - 1)) + 0.5f * 0.16f * cos(4.0f * M_PI * k / (width - 1));
+	return (double)0.5f * ((double)1.0f - (double)0.16f) - 0.5f * Cos(2.0f * M_PI * k / (width - 1)) + (double)0.5f * (double)0.16f * Cos(4.0f * M_PI * k / (width - 1));
+}
+
+double FastCos(double x)
+{
+	x -= (x > M_PI) * (double)2.0f * M_PI;
+	x += (x < -M_PI) * (double)2.0f * M_PI;
+	double xpow2 = x * x;
+	double xpow4 = xpow2 * x * x;
+	double xpow6 = xpow4 * x * x;
+	return (double)1.0f - xpow2 * REC_2_FAC + xpow4 * REC_4_FAC - xpow6 * REC_6_FAC + xpow6 * x * x * REC_8_FAC;
+}
+
+double FastSin(double x)
+{
+	x -= (x > M_PI) * (double)2.0f * M_PI;
+	x += (x < -M_PI) * (double)2.0f * M_PI;
+	double xpow3 = x * x * x;
+	double xpow5 = xpow3 * x * x;
+	double xpow7 = xpow5 * x * x;
+	return (double)x - xpow3 * REC_3_FAC + xpow5 * REC_5_FAC - xpow7 * REC_7_FAC + xpow7 * x * x * REC_9_FAC;
+}
+
+std::complex<double> ComplexExp(double x)
+{
+	return std::complex<double>(Cos(x), Sin(x));
 }

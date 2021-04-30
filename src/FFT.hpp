@@ -17,3 +17,4 @@ extern std::vector<std::pair<double, double>> FFT(const std::vector<double>::con
 	unsigned int zeropadding);
 
 extern void SetWindowFunction(WindowFunctions func, unsigned int width);
+extern void UseFastFunctions();
