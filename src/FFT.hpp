@@ -14,7 +14,6 @@ extern std::vector<std::pair<double, double>> FFT(const std::vector<double>::con
 	const std::vector<double>::const_iterator& end,
 	size_t sampleRate,
 	double minFreq, double maxFreq,
-	unsigned int zeropadding,
-	bool mertz);
+	unsigned int zeropadding);
 
 extern void SetWindowFunction(WindowFunctions func, unsigned int width);
