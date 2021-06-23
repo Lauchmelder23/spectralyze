@@ -15,7 +15,7 @@ By default, spectralyze will output the entire frequency spectrum, all the way u
 ```
 spectralyze -f 0,2500 coolSong.wav
 ```
-This command would only output frequencies ranging from 0kHz-2kHz, greatly decreasing file size.
+This command would only output frequencies ranging from 0kHz-2.5kHz, greatly decreasing file size.
 
 ## Disabling channels
 By default this program will analyze all channels in the given audio file, if you are only interested in noe specific channel you can tell the program that via the `-m` flag:
