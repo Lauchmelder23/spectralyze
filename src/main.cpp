@@ -56,14 +56,10 @@ int main(int argc, char** argv)
 	{
 		toJson = [](nlohmann::json& target, const std::vector<std::pair<double, double>>& spectrum)
 		{
-			target.push_back({ "spectrum", {
-				{ "freqs", nlohmann::json::array() },
-				{ "mags", nlohmann::json::array() }
-			} });
+			target.push_back({ "spectrum", nlohmann::json::array() });
 
 			for (const std::pair<double, double>& pair : spectrum) {
-				target["spectrum"]["freqs"].push_back(pair.first);
-				target["spectrum"]["mags"].push_back(pair.second);
+				target["spectrum"].push_back(pair.second);
 			}
 		};
 	}
@@ -83,6 +79,9 @@ int main(int argc, char** argv)
 		int numChannels = audioFile.getNumChannels();
 
 		nlohmann::json output;
+		if(!setts.legacy)
+			output["freqs"] = nlohmann::json::array();
+
 		int c = setts.analyzeChannel;
 		if (c == 0)
 			c = 1;
@@ -95,52 +94,38 @@ int main(int argc, char** argv)
 			std::string chName = "channel_" + std::to_string(c);
 			output[chName] = nlohmann::json::array();
 
-			if (setts.splitInterval == 0.0f)
+			int sampleInterval = (setts.splitInterval > 0.0f ? sampleRate * setts.splitInterval / 1000 : audioFile.samples[c - 1].size());
+			SetWindowFunction(setts.window, sampleInterval);
+			int currentSample;
+			for (currentSample = 0; currentSample < audioFile.samples[c - 1].size(); currentSample += sampleInterval)
 			{
-				SetWindowFunction(setts.window, audioFile.samples[c-1].size());
 				std::vector<std::pair<double, double>> spectrum = 
 					FFT(
-						audioFile.samples[c-1].cbegin(), 
-						audioFile.samples[c-1].cend(), 
+						audioFile.samples[c - 1].cbegin() + currentSample,
+						std::min(
+							audioFile.samples[c - 1].cbegin() + currentSample + sampleInterval,
+							audioFile.samples[c - 1].cend()
+						),
 						sampleRate,
 						setts.minFreq, setts.maxFreq,
 						setts.zeropadding
 					);
 
-				output[chName] = nlohmann::json::array();
-				for (const std::pair<double, double>& pair : spectrum) {
-					output[chName].push_back({ {"freq", pair.first}, {"mag", pair.second } });
-				}
-			}
-			else
-			{
-				int sampleInterval = sampleRate * setts.splitInterval / 1000;
-				SetWindowFunction(setts.window, sampleInterval);
-				int currentSample;
-				for (currentSample = 0; currentSample < audioFile.samples[c - 1].size(); currentSample += sampleInterval)
+				if (!setts.legacy && output["freqs"].empty())
 				{
-					std::vector<std::pair<double, double>> spectrum = 
-						FFT(
-							audioFile.samples[c - 1].cbegin() + currentSample,
-							std::min(
-								audioFile.samples[c - 1].cbegin() + currentSample + sampleInterval,
-								audioFile.samples[c - 1].cend()
-							),
-							sampleRate,
-							setts.minFreq, setts.maxFreq,
-							setts.zeropadding
-						);
-
-					output[chName].push_back({
-						{"begin", currentSample},
-						{"end", currentSample + sampleInterval}
-					});
-
-					toJson(output[chName].back(), spectrum);
-
-					PRINTER(setts, "\rAnalyzing " << filename << "... Channel " << c << "/" << numChannels << " " << (int)std::floor((float)currentSample / (float)audioFile.samples[c-1].size() * 100.0f) << "%                  ");
-					// std::cout << "sdfjkhsjd" << std::endl;
+					for (const std::pair<double, double>& pair : spectrum) {
+						output["freqs"].push_back(pair.first);
+					}
 				}
+
+				output[chName].push_back({
+					{"begin", currentSample},
+					{"end", currentSample + sampleInterval}
+				});
+
+				toJson(output[chName].back(), spectrum);
+
+				PRINTER(setts, "\rAnalyzing " << filename << "... Channel " << c << "/" << numChannels << " " << (int)std::floor((float)currentSample / (float)audioFile.samples[c-1].size() * 100.0f) << "%                  ");
 			}
 		}
 
