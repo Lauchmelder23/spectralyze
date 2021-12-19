@@ -26,7 +26,7 @@ struct Settings {
 	double minFreq, maxFreq;
 	unsigned int analyzeChannel;
 	unsigned int zeropadding;
-	bool approx;
+	bool approx, legacy;
 	WindowFunctions window;
 };
 
@@ -39,6 +39,34 @@ int main(int argc, char** argv)
 
 	if (setts.approx) 
 		UseFastFunctions();
+
+	std::function<void(nlohmann::json&, const std::vector<std::pair<double, double>>&)> toJson;
+	if (setts.legacy)
+	{
+		toJson = [](nlohmann::json& target, const std::vector<std::pair<double, double>>& spectrum)
+		{
+			target.push_back({ "spectrum", nlohmann::json::array()});
+
+			for (const std::pair<double, double>& pair : spectrum) {
+				target["spectrum"].push_back({{"freq", pair.first}, {"mag", pair.second}});
+			}
+		};
+	}
+	else
+	{
+		toJson = [](nlohmann::json& target, const std::vector<std::pair<double, double>>& spectrum)
+		{
+			target.push_back({ "spectrum", {
+				{ "freqs", nlohmann::json::array() },
+				{ "mags", nlohmann::json::array() }
+			} });
+
+			for (const std::pair<double, double>& pair : spectrum) {
+				target["spectrum"]["freqs"].push_back(pair.first);
+				target["spectrum"]["mags"].push_back(pair.second);
+			}
+		};
+	}
 
 	int numFiles = setts.files.size();
 	for (auto& file : setts.files) {
@@ -105,21 +133,19 @@ int main(int argc, char** argv)
 
 					output[chName].push_back({
 						{"begin", currentSample},
-						{"end", currentSample + sampleInterval},
-						{"spectrum", nlohmann::json::array()}
+						{"end", currentSample + sampleInterval}
 					});
 
-					for (const std::pair<double, double>& pair : spectrum) {
-						output[chName].back()["spectrum"].push_back({ {"freq", pair.first}, {"mag", pair.second } });
-					}
+					toJson(output[chName].back(), spectrum);
 
 					PRINTER(setts, "\rAnalyzing " << filename << "... Channel " << c << "/" << numChannels << " " << (int)std::floor((float)currentSample / (float)audioFile.samples[c-1].size() * 100.0f) << "%                  ");
+					// std::cout << "sdfjkhsjd" << std::endl;
 				}
 			}
 		}
 
 		std::ofstream ofs(file.replace_extension("json"));
-		ofs << std::setw(4) << output << std::endl;
+		ofs << std::setw(4) << output.dump() << std::endl;
 		ofs.close();
 
 		PRINTER(setts, "\rAnalyzing " << filename << "... 100%                      " << std::endl);
@@ -147,6 +173,7 @@ Settings Parse(int argc, char** argv)
 			("m,mono", "Analyze only the given channel", cxxopts::value<unsigned int>()->default_value("0"))
 			("approx", "Use faster, but more inaccurate trigonometric functions instead of the std-functions (EXPERIMENTAL)")
 			("files", "Files to fourier transform", cxxopts::value<std::vector<std::filesystem::path>>())
+			("legacy", "Uses the legacy data structure (WHICH IS VERY BAD!)", cxxopts::value<bool>()->default_value("false"))
 			("h,help", "Print usage")
 			;
 
@@ -182,6 +209,7 @@ Settings Parse(int argc, char** argv)
 		setts.analyzeChannel = (result.count("mono") ? result["mono"].as<unsigned int>() : 0);
 		setts.zeropadding = (result.count("pad") ? result["pad"].as<unsigned int>() : 1);
 		setts.approx = (result.count("approx") ? true : false);
+		setts.legacy = (result.count("legacy") ? result["legacy"].as<bool>() : false);
 
 		if (!result.count("window"))
 		{
