@@ -1,8 +1,2 @@
-out
-bin
-build
-.vs
-__pycache__
-
-*.json
-res
+target/
+.vscode/
